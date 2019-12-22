@@ -16,8 +16,6 @@
  * https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
  * ======================================================================= */
 
-// TODO: Figure out how null will work.
-
 using System;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -80,14 +78,114 @@ namespace CSharpTools
             // Tokenize the data
             List<JSONToken> tokens = GetTokens(data);
             Console.WriteLine("Token Count: " + tokens.Count);
-            
-            // TODO: Parse the file
+
+            int index = 0;
+            _root = ParseToken(ref index, tokens);
         }
 
         public string Serialize()
         {
             // TODO: Serialize the file
             return "";
+        }
+
+        private JSONElement ParseToken(ref int index, List<JSONToken> tokens)
+        {
+            JSONElement element;
+            
+            switch (tokens[index].GetTokenType())
+            {
+                case JSONToken.ETokenType.OpenCurly:
+                {
+                    JSONObject obj = new JSONObject();
+                    index++;
+
+                    while (tokens[index].GetTokenType() != JSONToken.ETokenType.CloseCurly)
+                    {
+                        if (tokens[index].GetTokenType() == JSONToken.ETokenType.Comma)
+                        {
+                            index++;
+                        }
+                        
+                        if (tokens[index].GetTokenType() != JSONToken.ETokenType.String ||
+                            tokens[index + 1].GetTokenType() != JSONToken.ETokenType.Colon)
+                        {
+                            Console.WriteLine(tokens[index].GetTokenValue());
+                            Console.WriteLine(tokens[index + 1].GetTokenValue());
+                            throw new JsonException($"Parse issue. Expected string then colon.");
+                        }
+
+                        string val = tokens[index].GetTokenValue();
+                        string key = val.Substring(1, val.Length - 2);
+                        
+                        index += 2;
+                        
+                        obj[key] = ParseToken(ref index, tokens);
+                    }
+                    
+                    element = obj;
+                } break;
+                case JSONToken.ETokenType.OpenBracket:
+                {
+                    JSONArray arr = new JSONArray();
+                    index++;
+
+                    int count = 0;
+                    while (tokens[index].GetTokenType() != JSONToken.ETokenType.CloseBracket)
+                    {
+                        arr[count] = ParseToken(ref index, tokens);
+                        
+                        if (tokens[index + 1].GetTokenType() == JSONToken.ETokenType.Comma)
+                        {
+                            index++;
+                        }
+
+                        index++;
+                        count++;
+                    }
+
+                    element = arr;
+                } break;
+                case JSONToken.ETokenType.String:
+                {
+                    string val = tokens[index].GetTokenValue();
+                    string str = val.Substring(1, val.Length - 2);
+                    
+                    index++;
+                    
+                    element = str;
+                } break;
+                case JSONToken.ETokenType.Number:
+                {
+                    string val = tokens[index].GetTokenValue();
+                    double dbl = double.Parse(val);
+
+                    index++;
+
+                    element = dbl;
+                } break;
+                case JSONToken.ETokenType.Boolean:
+                {
+                    string val = tokens[index].GetTokenValue();
+                    bool b = bool.Parse(val);
+
+                    index++;
+
+                    element = b;
+                } break;
+                case JSONToken.ETokenType.Null:
+                {
+                    index++;
+
+                    element = null;
+                } break;
+                default:
+                {
+                    throw new ArgumentOutOfRangeException();
+                }
+            }
+            
+            return element;
         }
         
         private List<JSONToken> GetTokens(string data)
@@ -143,7 +241,7 @@ namespace CSharpTools
                         if (data[1] == 'u' && data[2] == 'l' && data[3] == 'l')
                         {
                             tokens.Add(new JSONToken(JSONToken.ETokenType.Null, "null"));
-                            data = data.Remove(4);
+                            data = data.Remove(0, 4);
                         }
                         else
                             throw new JsonException("Invalid token starting with 'n'! 'null' expected..");
@@ -300,7 +398,7 @@ namespace CSharpTools
         /// <returns>JSONArray or default</returns>
         public static implicit operator JSONArray(JSONElement element)
         {
-            if (element._type == typeof(JSONArray))
+            if (element != null && element._type == typeof(JSONArray))
             {
                 return (JSONArray)element._data;
             }
@@ -325,7 +423,7 @@ namespace CSharpTools
         /// <returns>JSONObject or default</returns>
         public static implicit operator JSONObject(JSONElement element)
         {
-            if (element._type == typeof(JSONObject))
+            if (element != null && element._type == typeof(JSONObject))
             {
                 return (JSONObject) element._data;
             }
@@ -350,7 +448,12 @@ namespace CSharpTools
         /// <returns>double or default</returns>
         public static implicit operator double(JSONElement element)
         {
-            if (element._type == typeof(double))
+            if (element == null)
+            {
+                return default;
+            }
+            
+            if(element._type == typeof(double))
             {
                 return (double) element._data;
             }
@@ -375,6 +478,11 @@ namespace CSharpTools
         /// <returns>bool or default</returns>
         public static implicit operator bool(JSONElement element)
         {
+            if (element == null)
+            {
+                return default;
+            }
+
             if (element._type == typeof(bool))
             {
                 return (bool) element._data;
@@ -400,7 +508,7 @@ namespace CSharpTools
         /// <returns>string value or default</returns>
         public static implicit operator string(JSONElement element)
         {
-            if (element._type == typeof(string))
+            if (element != null && element._type == typeof(string))
             {
                 return (string) element._data;
             }
