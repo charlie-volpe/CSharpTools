@@ -8,10 +8,16 @@
  * Started: 2019-12-16
  * 
  * Description:
- *   An implementation of the JSON format for C# & .Net that is easy to use
+ * An implementation of the JSON format for C# & .Net that is easy to use
  * and that follows the standard. The goal is to make it work well for users
  * a bit easier than the data contract serialization classes.
  *
+ * On JSONObject and JSONArray:
+ * Any validation of the types that "should" or "shouldn't" match
+ * inside of a JSONObject or JSONArray is not handled. The JSONObject or
+ * JSONArray will be able to contain any value of a known type. It is
+ * up to the data provider / receiver to validate the data.
+ * 
  * JSON Standard: ECMA-404
  * https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
  * ======================================================================= */
@@ -130,9 +136,9 @@ namespace CSharpTools
                         if (tokens[index].GetTokenType() != JSONToken.ETokenType.String ||
                             tokens[index + 1].GetTokenType() != JSONToken.ETokenType.Colon)
                         {
-                            Console.WriteLine(tokens[index].GetTokenValue());
-                            Console.WriteLine(tokens[index + 1].GetTokenValue());
-                            throw new JsonException($"Parse issue. Expected string then colon.");
+                            Console.WriteLine("Token: " + tokens[index].GetTokenValue());
+                            Console.WriteLine("Next Token:" + tokens[index + 1].GetTokenValue());
+                            throw new JsonException("Parse issue. Expected string then colon.");
                         }
 
                         string val = tokens[index].GetTokenValue();
