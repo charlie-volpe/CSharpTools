@@ -1,5 +1,5 @@
 ﻿/* ======================================================================= *
- * CSharpTools are meant to be useful and reusable
+ * JSON are meant to be useful and reusable
  * License: MIT (Copyright Charlie Volpe) --- See LICENSE file.
  *
  * JSON (JavaScript Object Notation)
