@@ -1,8 +1,8 @@
 ﻿/* ======================================================================= *
  * CSharpTools are meant to be useful and reusable
- * License: MIT (Copyright Charlie Volpe) --- See LICENSE file.
  *
  * JSON (JavaScript Object Notation)
+ * License: MIT (Copyright Charlie Volpe) --- See LICENSE file.
  * 
  * Author: Charlie Volpe
  * Started: 2019-12-16
