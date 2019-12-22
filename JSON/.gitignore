@@ -94,8 +94,14 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
+
 # Removing the csproj for now
-*.csproj
+**.csproj
+*.sln
+*.sln.DotSettings
+**/.idea/
+
+/CSharpProject/
 
 # Chutzpah Test files
 _Chutzpah*
