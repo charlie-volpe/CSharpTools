@@ -372,7 +372,30 @@ namespace CSharpTools
                     } break;
                     case '"': // '\u0022'
                     {
-                        string str = data.Substring(0, data.IndexOf('"', 1) + 1);
+                        int[] indices =
+                        {
+                            data.IndexOf("\":", StringComparison.Ordinal),
+                            data.IndexOf("\",", StringComparison.Ordinal),
+                            data.IndexOf("\"}", StringComparison.Ordinal),
+                            data.IndexOf("\"]", StringComparison.Ordinal)
+                        };
+                        
+                        if (indices[0] < 0 && indices[1] < 0 && indices[2] < 0 && indices[3] < 0)
+                        {
+                            throw new JsonException("Didn't find expected end of string!");
+                        }
+
+                        int index = Int32.MaxValue;
+
+                        for (int i = 0; i < indices.Length; i++)
+                        {
+                            if (indices[i] >= 0 && indices[i] < index)
+                            {
+                                index = indices[i];
+                            }
+                        }
+                        
+                        string str = data.Substring(0, index + 1);
                         tokens.Add(new JSONToken(JSONToken.ETokenType.String, str));
                         data = data.Remove(0, str.Length);
                     } break;
