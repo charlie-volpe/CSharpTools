@@ -65,20 +65,27 @@ namespace CSharpTools
             _root = null;
         }
 
+        /// <summary>
+        /// Deserialize takes in string data, tokenizes it, parses the tokens
+        /// and sets the root object of JSON to the main JSONObject of the data.
+        /// </summary>
+        /// <param name="content">String data to parse</param>
+        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
         public void Deserialize(string content)
         {
             // Remove all whitespace from the content leaving just the data
             string data = Regex.Replace(content, @"\s+", "");
             
+            // Make sure that data starts with JSONObject
             if (data[0] != '{')
             {
-                throw new ArgumentException("content is not of type json or doesn't start with '{'");
+                throw new JsonException("content is not of type json or doesn't start with '{'");
             }
             
             // Tokenize the data
             List<JSONToken> tokens = GetTokens(data);
-            Console.WriteLine("Token Count: " + tokens.Count);
 
+            // Parse the data
             int index = 0;
             _root = ParseToken(ref index, tokens);
         }
@@ -86,9 +93,22 @@ namespace CSharpTools
         public string Serialize()
         {
             // TODO: Serialize the file
-            return "";
+            string parsed = "";
+            return parsed;
         }
 
+        /// <summary>
+        /// ParseToken goes through the token list recursively and
+        /// creates the json data object as it goes. JSONObjects and
+        /// JSONArrays keep drilling down until it reaches a base
+        /// JSONElement. When recursion completes, store the final
+        /// returned element into the _root object of JSON.
+        /// </summary>
+        /// <param name="index">Position in tokens list, passed by reference</param>
+        /// <param name="tokens">The tokens to be parsed</param>
+        /// <returns>JSONElement parsed</returns>
+        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Exception thrown if invalid token type</exception>
         private JSONElement ParseToken(ref int index, List<JSONToken> tokens)
         {
             JSONElement element;
@@ -188,10 +208,17 @@ namespace CSharpTools
             return element;
         }
         
+        /// <summary>
+        /// GetTokens walks through the characters in the data and creates tokens.
+        /// </summary>
+        /// <param name="data">String data to parse</param>
+        /// <returns>A list of the tokens found in the string data</returns>
+        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
         private List<JSONToken> GetTokens(string data)
         {
             List<JSONToken> tokens = new List<JSONToken>();
             
+            // Cycles through the data and removes the characters it has tokenized as it goes
             while (data.Length > 0 && data[0] != '\0')
             {
                 switch (data[0])
@@ -313,6 +340,14 @@ namespace CSharpTools
         }
     }
 
+    /// <summary>
+    /// JSON Token Class
+    ///
+    /// Tokens are used in parsing the data. The parser uses the
+    /// token type to figure out how to parse the data and it
+    /// parses the value based on that token type.
+    /// 
+    /// </summary>
     public class JSONToken
     {
         public enum ETokenType
