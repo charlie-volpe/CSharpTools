@@ -23,9 +23,11 @@
  * ======================================================================= */
 
 using System;
+using System.Data;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Globalization;
 
 // Examples in summaries below have white-space added for readability, but are
 // placed on a single line as to not make the code too spaced out.
@@ -96,11 +98,90 @@ namespace CSharpTools
             _root = ParseToken(ref index, tokens);
         }
 
+        /// <summary>
+        /// Serialize encodes the _root object recursively with EncodeElement
+        /// and returns the resulting string data.
+        /// </summary>
+        /// <returns>Serialized string data</returns>
         public string Serialize()
         {
-            // TODO: Serialize the file
-            string parsed = "";
-            return parsed;
+            string encoded = "";
+            
+            EncodeElement(ref encoded, _root);
+            
+            return encoded;
+        }
+
+        /// <summary>
+        /// EncodeElement goes through the element recursively and
+        /// creates the encoded string data as it goes. JSONObjects and
+        /// JSONArrays keep drilling down until it reaches a base
+        /// JSONElement. When recursion completes, the final
+        /// string is stored in the referenced string provided.
+        /// </summary>
+        /// <param name="encoded">String data where the encoded data is stored</param>
+        /// <param name="element">The current JSONElement to be encoded</param>
+        /// <exception cref="DataException">Thrown if the data type is invalid</exception>
+        private void EncodeElement(ref string encoded, JSONElement element)
+        {
+            if (element == null)
+            {
+                encoded += "null";
+            }
+            else if (element.GetDataType() == typeof(JSONObject))
+            {
+                encoded += "{";
+                JSONObject obj = element;
+                
+                foreach (KeyValuePair<string, JSONElement> item in obj.GetData())
+                {
+                    encoded += $"\"{item.Key}\":";
+                    EncodeElement(ref encoded, item.Value);
+                    encoded += ",";
+                }
+
+                // Remove the unneeded trailing comma before capping the JSONObject
+                encoded = encoded.TrimEnd(',');
+                encoded += "}";
+            }
+            else if (element.GetDataType() == typeof(JSONArray))
+            {
+                encoded += "[";
+                JSONArray arr = element;
+
+                foreach (JSONElement item in arr.GetData())
+                {
+                    EncodeElement(ref encoded, item);
+                    encoded += ",";
+                }
+
+                // Remove the unneeded trailing comma before capping the JSONArray
+                encoded = encoded.TrimEnd(',');
+                encoded += "]";
+            }
+            else if (element.GetDataType() == typeof(string))
+            {
+                encoded += $"\"{(string)element}\"";
+            }
+            else if (element.GetDataType() == typeof(double))
+            {
+                encoded += ((double) element).ToString(CultureInfo.InvariantCulture);
+            }
+            else if (element.GetDataType() == typeof(bool))
+            {
+                if ((bool) element)
+                {
+                    encoded += "true";
+                }
+                else
+                {
+                    encoded += "false";
+                }
+            }
+            else
+            {
+                throw new DataException("Invalid data type when encoding JSON.");
+            }
         }
 
         /// <summary>
@@ -607,6 +688,11 @@ namespace CSharpTools
             _data.TrimExcess();
             _data = null;
         }
+
+        public Dictionary<string, JSONElement> GetData()
+        {
+            return _data;
+        }
     }
 
     /// <summary>
@@ -652,6 +738,11 @@ namespace CSharpTools
             _data.Clear();
             _data.TrimExcess();
             _data = null;
+        }
+
+        public List<JSONElement> GetData()
+        {
+            return _data;
         }
     }
 }
