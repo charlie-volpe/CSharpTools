@@ -29,6 +29,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.Serialization;
 
 // Examples in summaries below have white-space added for readability, but are
 // placed on a single line as to not make the code too spaced out.
@@ -527,6 +528,7 @@ namespace CSharpTools
                         obj[key] = ParseToken(ref index, tokens);
                     }
                     
+                    index++;
                     element = obj;
                 } break;
                 case JSONToken.ETokenType.OpenBracket:
@@ -537,17 +539,16 @@ namespace CSharpTools
                     int count = 0;
                     while (tokens[index].GetTokenType() != JSONToken.ETokenType.CloseBracket)
                     {
-                        arr[count] = ParseToken(ref index, tokens);
-                        
-                        if (tokens[index + 1].GetTokenType() == JSONToken.ETokenType.Comma)
+                        if (tokens[index].GetTokenType() == JSONToken.ETokenType.Comma)
                         {
                             index++;
                         }
-
-                        index++;
+                        
+                        arr[count] = ParseToken(ref index, tokens);
                         count++;
                     }
 
+                    index++;
                     element = arr;
                 } break;
                 case JSONToken.ETokenType.String:
@@ -791,6 +792,12 @@ namespace CSharpTools
         {
             return _data;
         }
+
+        public string Serialize()
+        {
+            JSONElement element = this;
+            return element.Serialize();
+        }
     }
 
     /// <summary>
@@ -841,6 +848,12 @@ namespace CSharpTools
         public List<JSONElement> GetData()
         {
             return _data;
+        }
+
+        public string Serialize()
+        {
+            JSONElement element = this;
+            return element.Serialize();
         }
     }
 }
