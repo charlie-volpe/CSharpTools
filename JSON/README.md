@@ -50,6 +50,3 @@ I decided not to write that into the initial version so that I could release it 
 ## Conclusion
 I will be using this in my projects from here on, instead of the DataContracts implementation that comes
 with C#'s System libraries. Hopefully you find it useful in your projects as well.
-
-Cheers,</br>
-Charlie Volpe
