@@ -43,7 +43,7 @@ namespace CSharpTools
     /// 
     /// Example:
     /// A full json can include any number of JSONElements inside the root object:
-    /// --> { "users": [ { "name": "Charlie", "level": "Admin" }, { "name": "Sam", "level": "Member" } ] }
+    /// --> { "users": [ { "name": "Smith", "level": "Admin" }, { "name": "Doe", "level": "Member" } ] }
     /// but should at least have a root object:
     /// --> { }
     /// 
@@ -755,9 +755,9 @@ namespace CSharpTools
     ///
     /// Example:
     /// A full object can look something like:
-    /// --> { "name": "Charlie" }
+    /// --> { "name": "Smith" }
     /// or:
-    /// --> { "user": { "name": "Charlie", "level": "Admin" } }
+    /// --> { "user": { "name": "Smith", "level": "Admin" } }
     /// etc.
     /// 
     /// '{' U+007B left curly bracket --- begins the object
@@ -802,7 +802,7 @@ namespace CSharpTools
     /// A full array can look something like:
     /// --> [ 0.0, 1.0, 1.1 ]
     /// or:
-    /// --> [ { "name": "Charlie" }, { "name": "Sam" } ]
+    /// --> [ { "name": "Smith" }, { "name": "Doe" } ]
     /// etc.
     /// 
     /// '[' U+005B left square bracket --- begins the array
