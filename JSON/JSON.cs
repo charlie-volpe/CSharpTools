@@ -50,12 +50,64 @@ namespace CSharpTools
     /// </summary>
     public class JSON
     {
-        private JSONObject _root;
+        private JSONElement _root;
 
+        /// <summary>
+        /// Set _root by string key if _root is of Type JSONObject
+        /// </summary>
+        /// <param name="key">String Key</param>
+        /// <exception cref="ArgumentException">Exception thrown if _root is null or invalid type</exception>
         public JSONElement this[string key]
         {
-            get => _root[key];
-            set => _root[key] = value;
+            get
+            {
+                if (_root == null || _root.GetDataType() != typeof(JSONObject))
+                {
+                    throw new ArgumentException("JSON root is not of type JSONObject but is trying to be accessed by string key.");
+                }
+                
+                JSONObject obj = _root;
+                return obj[key];
+            }
+            set
+            {
+                if (_root == null || _root.GetDataType() != typeof(JSONObject))
+                {
+                    throw new ArgumentException("JSON root is not of type JSONObject but is trying to be accessed by string key.");
+                }
+
+                JSONObject obj = _root;
+                obj[key] = value;
+            }
+        }
+
+        /// <summary>
+        /// Set _root by index if _root is of Type JSONArray
+        /// </summary>
+        /// <param name="i">Index</param>
+        /// <exception cref="ArgumentException">Exception thrown if _root is null or invalid type</exception>
+        public JSONElement this[int i]
+        {
+            get
+            {
+                if (_root == null || _root.GetDataType() != typeof(JSONArray))
+                {
+                    throw new ArgumentException("JSON root is not of type JSONArray but is trying to be accessed by index.");
+                }
+
+                JSONArray arr = _root;
+                return arr[i];
+            }
+            set
+            {
+                if (_root == null || _root.GetDataType() != typeof(JSONArray))
+                {
+                    throw new ArgumentException("JSON root is not of type JSONArray but is trying to be accessed by index.");
+                }
+
+                JSONArray arr = _root;
+                arr[i] = value;
+            }
         }
         
         public JSON()
@@ -74,379 +126,31 @@ namespace CSharpTools
         }
 
         /// <summary>
-        /// Deserialize takes in string data, tokenizes it, parses the tokens
-        /// and sets the root object of JSON to the main JSONObject of the data.
+        /// Deserialize the content into a full JSON
         /// </summary>
-        /// <param name="content">String data to parse</param>
-        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
+        /// <param name="content">String data to deserialize</param>
+        /// <exception cref="JsonException">Exception thrown when invalid json is found</exception>
         public void Deserialize(string content)
         {
             // Remove all whitespace from the content leaving just the data
             string data = Regex.Replace(content, @"\s+", "");
             
             // Make sure that data starts with JSONObject
-            if (data[0] != '{')
+            if (!(data[0] == '{' || data[0] == '['))
             {
-                throw new JsonException("content is not of type json or doesn't start with '{'");
+                throw new JsonException("content is not of type json or doesn't start with '{' or '['");
             }
-            
-            // Tokenize the data
-            List<JSONToken> tokens = GetTokens(data);
 
-            // Parse the data
-            int index = 0;
-            _root = ParseToken(ref index, tokens);
+            _root = JSONElement.Deserialize(data);
         }
 
         /// <summary>
-        /// Serialize encodes the _root object recursively with EncodeElement
-        /// and returns the resulting string data.
+        /// Serializes the full JSON into a data string
         /// </summary>
-        /// <returns>Serialized string data</returns>
+        /// <returns>String data of _root JSONElement</returns>
         public string Serialize()
         {
-            string encoded = "";
-            
-            EncodeElement(ref encoded, _root);
-            
-            return encoded;
-        }
-
-        /// <summary>
-        /// EncodeElement goes through the element recursively and
-        /// creates the encoded string data as it goes. JSONObjects and
-        /// JSONArrays keep drilling down until it reaches a base
-        /// JSONElement. When recursion completes, the final
-        /// string is stored in the referenced string provided.
-        /// </summary>
-        /// <param name="encoded">String data where the encoded data is stored</param>
-        /// <param name="element">The current JSONElement to be encoded</param>
-        /// <exception cref="DataException">Thrown if the data type is invalid</exception>
-        private void EncodeElement(ref string encoded, JSONElement element)
-        {
-            if (element == null)
-            {
-                encoded += "null";
-            }
-            else if (element.GetDataType() == typeof(JSONObject))
-            {
-                encoded += "{";
-                JSONObject obj = element;
-                
-                foreach (KeyValuePair<string, JSONElement> item in obj.GetData())
-                {
-                    encoded += $"\"{item.Key}\":";
-                    EncodeElement(ref encoded, item.Value);
-                    encoded += ",";
-                }
-
-                // Remove the unneeded trailing comma before capping the JSONObject
-                encoded = encoded.TrimEnd(',');
-                encoded += "}";
-            }
-            else if (element.GetDataType() == typeof(JSONArray))
-            {
-                encoded += "[";
-                JSONArray arr = element;
-
-                foreach (JSONElement item in arr.GetData())
-                {
-                    EncodeElement(ref encoded, item);
-                    encoded += ",";
-                }
-
-                // Remove the unneeded trailing comma before capping the JSONArray
-                encoded = encoded.TrimEnd(',');
-                encoded += "]";
-            }
-            else if (element.GetDataType() == typeof(string))
-            {
-                encoded += $"\"{(string)element}\"";
-            }
-            else if (element.GetDataType() == typeof(double))
-            {
-                encoded += ((double) element).ToString(CultureInfo.InvariantCulture);
-            }
-            else if (element.GetDataType() == typeof(bool))
-            {
-                if ((bool) element)
-                {
-                    encoded += "true";
-                }
-                else
-                {
-                    encoded += "false";
-                }
-            }
-            else
-            {
-                throw new DataException("Invalid data type when encoding JSON.");
-            }
-        }
-
-        /// <summary>
-        /// ParseToken goes through the token list recursively and
-        /// creates the json data object as it goes. JSONObjects and
-        /// JSONArrays keep drilling down until it reaches a base
-        /// JSONElement. When recursion completes, store the final
-        /// returned element into the _root object of JSON.
-        /// </summary>
-        /// <param name="index">Position in tokens list, passed by reference</param>
-        /// <param name="tokens">The tokens to be parsed</param>
-        /// <returns>JSONElement parsed</returns>
-        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Exception thrown if invalid token type</exception>
-        private JSONElement ParseToken(ref int index, List<JSONToken> tokens)
-        {
-            JSONElement element;
-            
-            switch (tokens[index].GetTokenType())
-            {
-                case JSONToken.ETokenType.OpenCurly:
-                {
-                    JSONObject obj = new JSONObject();
-                    index++;
-
-                    while (tokens[index].GetTokenType() != JSONToken.ETokenType.CloseCurly)
-                    {
-                        if (tokens[index].GetTokenType() == JSONToken.ETokenType.Comma)
-                        {
-                            index++;
-                        }
-                        
-                        if (tokens[index].GetTokenType() != JSONToken.ETokenType.String ||
-                            tokens[index + 1].GetTokenType() != JSONToken.ETokenType.Colon)
-                        {
-                            Console.WriteLine("Token: " + tokens[index].GetTokenValue());
-                            Console.WriteLine("Next Token:" + tokens[index + 1].GetTokenValue());
-                            throw new JsonException("Parse issue. Expected string then colon.");
-                        }
-
-                        string val = tokens[index].GetTokenValue();
-                        string key = val.Substring(1, val.Length - 2);
-                        
-                        index += 2;
-                        
-                        obj[key] = ParseToken(ref index, tokens);
-                    }
-                    
-                    element = obj;
-                } break;
-                case JSONToken.ETokenType.OpenBracket:
-                {
-                    JSONArray arr = new JSONArray();
-                    index++;
-
-                    int count = 0;
-                    while (tokens[index].GetTokenType() != JSONToken.ETokenType.CloseBracket)
-                    {
-                        arr[count] = ParseToken(ref index, tokens);
-                        
-                        if (tokens[index + 1].GetTokenType() == JSONToken.ETokenType.Comma)
-                        {
-                            index++;
-                        }
-
-                        index++;
-                        count++;
-                    }
-
-                    element = arr;
-                } break;
-                case JSONToken.ETokenType.String:
-                {
-                    string val = tokens[index].GetTokenValue();
-                    string str = val.Substring(1, val.Length - 2);
-                    
-                    index++;
-                    
-                    element = str;
-                } break;
-                case JSONToken.ETokenType.Number:
-                {
-                    string val = tokens[index].GetTokenValue();
-                    double dbl = double.Parse(val);
-
-                    index++;
-
-                    element = dbl;
-                } break;
-                case JSONToken.ETokenType.Boolean:
-                {
-                    string val = tokens[index].GetTokenValue();
-                    bool b = bool.Parse(val);
-
-                    index++;
-
-                    element = b;
-                } break;
-                case JSONToken.ETokenType.Null:
-                {
-                    index++;
-
-                    element = null;
-                } break;
-                default:
-                {
-                    throw new ArgumentOutOfRangeException();
-                }
-            }
-            
-            return element;
-        }
-        
-        /// <summary>
-        /// GetTokens walks through the characters in the data and creates tokens.
-        /// </summary>
-        /// <param name="data">String data to parse</param>
-        /// <returns>A list of the tokens found in the string data</returns>
-        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
-        private List<JSONToken> GetTokens(string data)
-        {
-            List<JSONToken> tokens = new List<JSONToken>();
-            
-            // Cycles through the data and removes the characters it has tokenized as it goes
-            while (data.Length > 0 && data[0] != '\0')
-            {
-                switch (data[0])
-                {
-                    case '{': // '\u007B'
-                    {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenCurly, data[0].ToString()));
-                        data = data.Remove(0, 1);
-                    } break;
-                    case '[': // '\u005B'
-                    {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenBracket, data[0].ToString()));
-                        data = data.Remove(0, 1);
-                    } break;
-                    case ':': // '\u003A'
-                    {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.Colon, data[0].ToString()));
-                        data = data.Remove(0, 1);
-                    } break;
-                    case ',': // '\u002C'
-                    {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.Comma, data[0].ToString()));
-                        data = data.Remove(0, 1);
-                    } break;
-                    case '}': // '\u007D'
-                    {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseCurly, data[0].ToString()));
-                        data = data.Remove(0, 1);
-                    } break;
-                    case ']': // '\u005D'
-                    {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseBracket, data[0].ToString()));
-                        data = data.Remove(0, 1);
-                    } break;
-                    case 't': // '\u0074', '\u0072', '\u0075', '\u0065'
-                    {
-                        if (data[1] == 'r' && data[2] == 'u' && data[3] == 'e')
-                        {
-                            tokens.Add(new JSONToken(JSONToken.ETokenType.Boolean, "true"));
-                            data = data.Remove(0, 4);
-                        }
-                        else
-                            throw new JsonException("Invalid token starting with 't'! 'true' expected..");
-                    } break;
-                    case 'n': // '\u006E', '\u0075', '\u006C', '\u006C'
-                    {
-                        if (data[1] == 'u' && data[2] == 'l' && data[3] == 'l')
-                        {
-                            tokens.Add(new JSONToken(JSONToken.ETokenType.Null, "null"));
-                            data = data.Remove(0, 4);
-                        }
-                        else
-                            throw new JsonException("Invalid token starting with 'n'! 'null' expected..");
-                    } break;
-                    case 'f': // '\u0066', '\u0061', '\u006C', '\u0073', '\u0065'
-                    {
-                        if (data[1] == 'a' && data[2] == 'l' && data[3] == 's' && data[4] == 'e')
-                        {
-                            tokens.Add(new JSONToken(JSONToken.ETokenType.Boolean, "false"));
-                            data = data.Remove(0, 5);
-                        }
-                        else
-                            throw new JsonException("Invalid token starting with 'f'! 'false' expected..");
-                    } break;
-                    case '"': // '\u0022'
-                    {
-                        int[] indices =
-                        {
-                            data.IndexOf("\":", StringComparison.Ordinal),
-                            data.IndexOf("\",", StringComparison.Ordinal),
-                            data.IndexOf("\"}", StringComparison.Ordinal),
-                            data.IndexOf("\"]", StringComparison.Ordinal)
-                        };
-                        
-                        if (indices[0] < 0 && indices[1] < 0 && indices[2] < 0 && indices[3] < 0)
-                        {
-                            throw new JsonException("Didn't find expected end of string!");
-                        }
-
-                        int index = Int32.MaxValue;
-
-                        for (int i = 0; i < indices.Length; i++)
-                        {
-                            if (indices[i] >= 0 && indices[i] < index)
-                            {
-                                index = indices[i];
-                            }
-                        }
-                        
-                        string str = data.Substring(0, index + 1);
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.String, str));
-                        data = data.Remove(0, str.Length);
-                    } break;
-                    case '-': // '\u002D'
-                    case '0': // '\u0030'
-                    case '1': // '\u0031'
-                    case '2': // '\u0032'
-                    case '3': // '\u0033'
-                    case '4': // '\u0034'
-                    case '5': // '\u0035'
-                    case '6': // '\u0036'
-                    case '7': // '\u0037'
-                    case '8': // '\u0038'
-                    case '9': // '\u0039'
-                    {
-                        int count = 0;
-                        char c = data[count];
-                        while ((c >= '0' && c <= '9') || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-')
-                        {
-                            count++;
-                            c = data[count];
-                        }
-
-                        string str = data.Substring(0, count);
-                        try
-                        {
-                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
-                            double.Parse(str); // Only done to test if valid double
-                        }
-                        catch
-                        {
-                            throw new JsonException($"Invalid token when expecting number! Look for \"{str}\"..");
-                        }
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.Number, str));
-                        data = data.Remove(0, str.Length);
-                    } break;
-                    case '+': // '\u002B'
-                    case '.': // '\u002E'
-                    case 'e': // '\u0065'
-                    case 'E': // '\u0045'
-                    {
-                        throw new JsonException($"Invalid token: '{data[0]}'! Numbers should start with a digit or '-'.");
-                    }
-                    case '\'': // '\u0027'
-                    {
-                        throw new JsonException($"Invalid token: '{data[0]}'! Strings should start with a '\"'.");
-                    }
-                }
-            }
-
-            return tokens;
+            return _root.Serialize();
         }
     }
 
@@ -669,6 +373,376 @@ namespace CSharpTools
         public static implicit operator JSONElement(string str)
         {
             return new JSONElement(str);
+        }
+
+        /// <summary>
+        /// Serialize encodes the _root object recursively with EncodeElement
+        /// and returns the resulting string data.
+        /// </summary>
+        /// <returns>Serialized string data</returns>
+        public string Serialize()
+        {
+            string encoded = "";
+            
+            EncodeElement(ref encoded, this);
+            
+            return encoded;
+        }
+        
+        /// <summary>
+        /// EncodeElement goes through the element recursively and
+        /// creates the encoded string data as it goes. JSONObjects and
+        /// JSONArrays keep drilling down until it reaches a base
+        /// JSONElement. When recursion completes, the final
+        /// string is stored in the referenced string provided.
+        /// </summary>
+        /// <param name="encoded">String data where the encoded data is stored</param>
+        /// <param name="element">The current JSONElement to be encoded</param>
+        /// <exception cref="DataException">Thrown if the data type is invalid</exception>
+        private void EncodeElement(ref string encoded, JSONElement element)
+        {
+            if (element == null)
+            {
+                encoded += "null";
+            }
+            else if (element.GetDataType() == typeof(JSONObject))
+            {
+                encoded += "{";
+                JSONObject obj = element;
+                
+                foreach (KeyValuePair<string, JSONElement> item in obj.GetData())
+                {
+                    encoded += $"\"{item.Key}\":";
+                    EncodeElement(ref encoded, item.Value);
+                    encoded += ",";
+                }
+
+                // Remove the unneeded trailing comma before capping the JSONObject
+                encoded = encoded.TrimEnd(',');
+                encoded += "}";
+            }
+            else if (element.GetDataType() == typeof(JSONArray))
+            {
+                encoded += "[";
+                JSONArray arr = element;
+
+                foreach (JSONElement item in arr.GetData())
+                {
+                    EncodeElement(ref encoded, item);
+                    encoded += ",";
+                }
+
+                // Remove the unneeded trailing comma before capping the JSONArray
+                encoded = encoded.TrimEnd(',');
+                encoded += "]";
+            }
+            else if (element.GetDataType() == typeof(string))
+            {
+                encoded += $"\"{(string)element}\"";
+            }
+            else if (element.GetDataType() == typeof(double))
+            {
+                encoded += ((double) element).ToString(CultureInfo.InvariantCulture);
+            }
+            else if (element.GetDataType() == typeof(bool))
+            {
+                if ((bool) element)
+                {
+                    encoded += "true";
+                }
+                else
+                {
+                    encoded += "false";
+                }
+            }
+            else
+            {
+                throw new DataException("Invalid data type when encoding JSON.");
+            }
+        }
+        
+        /// <summary>
+        /// Deserialize takes in string data, tokenizes it, parses the tokens
+        /// and sets the root object of JSON to the main JSONObject of the data.
+        /// </summary>
+        /// <param name="content">String data to deserialize</param>
+        /// <returns>JSONElement that was parsed</returns>
+        public static JSONElement Deserialize(string content)
+        {
+            // Remove all whitespace from the content leaving just the data
+            string data = Regex.Replace(content, @"\s+", "");
+            
+            // Tokenize the data
+            List<JSONToken> tokens = GetTokens(data);
+
+            // Parse the data
+            int index = 0;
+            return ParseToken(ref index, tokens);
+        }
+
+        /// <summary>
+        /// ParseToken goes through the token list recursively and
+        /// creates the json data object as it goes. JSONObjects and
+        /// JSONArrays keep drilling down until it reaches a base
+        /// JSONElement. When recursion completes, store the final
+        /// returned element into the _root object of JSON.
+        /// </summary>
+        /// <param name="index">Position in tokens list, passed by reference</param>
+        /// <param name="tokens">The tokens to be parsed</param>
+        /// <returns>JSONElement parsed</returns>
+        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Exception thrown if invalid token type</exception>
+        private static JSONElement ParseToken(ref int index, List<JSONToken> tokens)
+        {
+            JSONElement element;
+            
+            switch (tokens[index].GetTokenType())
+            {
+                case JSONToken.ETokenType.OpenCurly:
+                {
+                    JSONObject obj = new JSONObject();
+                    index++;
+
+                    while (tokens[index].GetTokenType() != JSONToken.ETokenType.CloseCurly)
+                    {
+                        if (tokens[index].GetTokenType() == JSONToken.ETokenType.Comma)
+                        {
+                            index++;
+                        }
+                        
+                        if (tokens[index].GetTokenType() != JSONToken.ETokenType.String ||
+                            tokens[index + 1].GetTokenType() != JSONToken.ETokenType.Colon)
+                        {
+                            Console.WriteLine("Token: " + tokens[index].GetTokenValue());
+                            Console.WriteLine("Next Token:" + tokens[index + 1].GetTokenValue());
+                            throw new JsonException("Parse issue. Expected string then colon.");
+                        }
+
+                        string val = tokens[index].GetTokenValue();
+                        string key = val.Substring(1, val.Length - 2);
+                        
+                        index += 2;
+                        
+                        obj[key] = ParseToken(ref index, tokens);
+                    }
+                    
+                    element = obj;
+                } break;
+                case JSONToken.ETokenType.OpenBracket:
+                {
+                    JSONArray arr = new JSONArray();
+                    index++;
+
+                    int count = 0;
+                    while (tokens[index].GetTokenType() != JSONToken.ETokenType.CloseBracket)
+                    {
+                        arr[count] = ParseToken(ref index, tokens);
+                        
+                        if (tokens[index + 1].GetTokenType() == JSONToken.ETokenType.Comma)
+                        {
+                            index++;
+                        }
+
+                        index++;
+                        count++;
+                    }
+
+                    element = arr;
+                } break;
+                case JSONToken.ETokenType.String:
+                {
+                    string val = tokens[index].GetTokenValue();
+                    string str = val.Substring(1, val.Length - 2);
+                    
+                    index++;
+                    
+                    element = str;
+                } break;
+                case JSONToken.ETokenType.Number:
+                {
+                    string val = tokens[index].GetTokenValue();
+                    double dbl = double.Parse(val);
+
+                    index++;
+
+                    element = dbl;
+                } break;
+                case JSONToken.ETokenType.Boolean:
+                {
+                    string val = tokens[index].GetTokenValue();
+                    bool b = bool.Parse(val);
+
+                    index++;
+
+                    element = b;
+                } break;
+                case JSONToken.ETokenType.Null:
+                {
+                    index++;
+
+                    element = null;
+                } break;
+                default:
+                {
+                    throw new ArgumentOutOfRangeException();
+                }
+            }
+            
+            return element;
+        }
+        
+        /// <summary>
+        /// GetTokens walks through the characters in the data and creates tokens.
+        /// </summary>
+        /// <param name="data">String data to parse</param>
+        /// <returns>A list of the tokens found in the string data</returns>
+        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
+        private static List<JSONToken> GetTokens(string data)
+        {
+            List<JSONToken> tokens = new List<JSONToken>();
+            
+            // Cycles through the data and removes the characters it has tokenized as it goes
+            while (data.Length > 0 && data[0] != '\0')
+            {
+                switch (data[0])
+                {
+                    case '{': // '\u007B'
+                    {
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenCurly, data[0].ToString()));
+                        data = data.Remove(0, 1);
+                    } break;
+                    case '[': // '\u005B'
+                    {
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenBracket, data[0].ToString()));
+                        data = data.Remove(0, 1);
+                    } break;
+                    case ':': // '\u003A'
+                    {
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.Colon, data[0].ToString()));
+                        data = data.Remove(0, 1);
+                    } break;
+                    case ',': // '\u002C'
+                    {
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.Comma, data[0].ToString()));
+                        data = data.Remove(0, 1);
+                    } break;
+                    case '}': // '\u007D'
+                    {
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseCurly, data[0].ToString()));
+                        data = data.Remove(0, 1);
+                    } break;
+                    case ']': // '\u005D'
+                    {
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseBracket, data[0].ToString()));
+                        data = data.Remove(0, 1);
+                    } break;
+                    case 't': // '\u0074', '\u0072', '\u0075', '\u0065'
+                    {
+                        if (data[1] == 'r' && data[2] == 'u' && data[3] == 'e')
+                        {
+                            tokens.Add(new JSONToken(JSONToken.ETokenType.Boolean, "true"));
+                            data = data.Remove(0, 4);
+                        }
+                        else
+                            throw new JsonException("Invalid token starting with 't'! 'true' expected..");
+                    } break;
+                    case 'n': // '\u006E', '\u0075', '\u006C', '\u006C'
+                    {
+                        if (data[1] == 'u' && data[2] == 'l' && data[3] == 'l')
+                        {
+                            tokens.Add(new JSONToken(JSONToken.ETokenType.Null, "null"));
+                            data = data.Remove(0, 4);
+                        }
+                        else
+                            throw new JsonException("Invalid token starting with 'n'! 'null' expected..");
+                    } break;
+                    case 'f': // '\u0066', '\u0061', '\u006C', '\u0073', '\u0065'
+                    {
+                        if (data[1] == 'a' && data[2] == 'l' && data[3] == 's' && data[4] == 'e')
+                        {
+                            tokens.Add(new JSONToken(JSONToken.ETokenType.Boolean, "false"));
+                            data = data.Remove(0, 5);
+                        }
+                        else
+                            throw new JsonException("Invalid token starting with 'f'! 'false' expected..");
+                    } break;
+                    case '"': // '\u0022'
+                    {
+                        int[] indices =
+                        {
+                            data.IndexOf("\":", StringComparison.Ordinal),
+                            data.IndexOf("\",", StringComparison.Ordinal),
+                            data.IndexOf("\"}", StringComparison.Ordinal),
+                            data.IndexOf("\"]", StringComparison.Ordinal)
+                        };
+                        
+                        if (indices[0] < 0 && indices[1] < 0 && indices[2] < 0 && indices[3] < 0)
+                        {
+                            throw new JsonException("Didn't find expected end of string!");
+                        }
+
+                        int index = Int32.MaxValue;
+
+                        for (int i = 0; i < indices.Length; i++)
+                        {
+                            if (indices[i] >= 0 && indices[i] < index)
+                            {
+                                index = indices[i];
+                            }
+                        }
+                        
+                        string str = data.Substring(0, index + 1);
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.String, str));
+                        data = data.Remove(0, str.Length);
+                    } break;
+                    case '-': // '\u002D'
+                    case '0': // '\u0030'
+                    case '1': // '\u0031'
+                    case '2': // '\u0032'
+                    case '3': // '\u0033'
+                    case '4': // '\u0034'
+                    case '5': // '\u0035'
+                    case '6': // '\u0036'
+                    case '7': // '\u0037'
+                    case '8': // '\u0038'
+                    case '9': // '\u0039'
+                    {
+                        int count = 0;
+                        char c = data[count];
+                        while ((c >= '0' && c <= '9') || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-')
+                        {
+                            count++;
+                            c = data[count];
+                        }
+
+                        string str = data.Substring(0, count);
+                        try
+                        {
+                            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+                            double.Parse(str); // Only done to test if valid double
+                        }
+                        catch
+                        {
+                            throw new JsonException($"Invalid token when expecting number! Look for \"{str}\"..");
+                        }
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.Number, str));
+                        data = data.Remove(0, str.Length);
+                    } break;
+                    case '+': // '\u002B'
+                    case '.': // '\u002E'
+                    case 'e': // '\u0065'
+                    case 'E': // '\u0045'
+                    {
+                        throw new JsonException($"Invalid token: '{data[0]}'! Numbers should start with a digit or '-'.");
+                    }
+                    case '\'': // '\u0027'
+                    {
+                        throw new JsonException($"Invalid token: '{data[0]}'! Strings should start with a '\"'.");
+                    }
+                }
+            }
+
+            return tokens;
         }
     }
 
