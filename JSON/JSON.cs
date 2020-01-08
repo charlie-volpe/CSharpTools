@@ -6,7 +6,7 @@
  * 
  * Author: Charlie Volpe
  * Started: 2019-12-16
- * Version: 1.0.0
+ * Version: 1.0.1
  * 
  * Description:
  * An implementation of the JSON format for C# & .Net that is easy to use
