@@ -25,10 +25,9 @@
 
 using System;
 using System.Data;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using System.Globalization;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 // Examples in summaries below have white-space added for readability, but are
 // placed on a single line as to not make the code too spaced out.
@@ -130,7 +129,7 @@ namespace CSharpTools
         /// Deserialize the content into a full JSON
         /// </summary>
         /// <param name="content">String data to deserialize</param>
-        /// <exception cref="JsonException">Exception thrown when invalid json is found</exception>
+        /// <exception cref="DataException">Exception thrown when invalid json is found</exception>
         public void Deserialize(string content)
         {
             // Remove all whitespace from the content leaving just the data
@@ -139,7 +138,7 @@ namespace CSharpTools
             // Make sure that data starts with JSONObject
             if (!(data[0] == '{' || data[0] == '['))
             {
-                throw new JsonException("content is not of type json or doesn't start with '{' or '['");
+                throw new DataException("content is not of type json or doesn't start with '{' or '['");
             }
 
             _root = JSONElement.Deserialize(data);
@@ -491,7 +490,7 @@ namespace CSharpTools
         /// <param name="index">Position in tokens list, passed by reference</param>
         /// <param name="tokens">The tokens to be parsed</param>
         /// <returns>JSONElement parsed</returns>
-        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
+        /// <exception cref="DataException">Exception thrown if invalid json data found</exception>
         /// <exception cref="ArgumentOutOfRangeException">Exception thrown if invalid token type</exception>
         private static JSONElement ParseToken(ref int index, List<JSONToken> tokens)
         {
@@ -516,7 +515,7 @@ namespace CSharpTools
                         {
                             Console.WriteLine("Token: " + tokens[index].GetTokenValue());
                             Console.WriteLine("Next Token:" + tokens[index + 1].GetTokenValue());
-                            throw new JsonException("Parse issue. Expected string then colon.");
+                            throw new DataException("Parse issue. Expected string then colon.");
                         }
 
                         string val = tokens[index].GetTokenValue();
@@ -597,7 +596,7 @@ namespace CSharpTools
         /// </summary>
         /// <param name="data">String data to parse</param>
         /// <returns>A list of the tokens found in the string data</returns>
-        /// <exception cref="JsonException">Exception thrown if invalid json data found</exception>
+        /// <exception cref="DataException">Exception thrown if invalid json data found</exception>
         private static List<JSONToken> GetTokens(string data)
         {
             List<JSONToken> tokens = new List<JSONToken>();
@@ -645,7 +644,7 @@ namespace CSharpTools
                             data = data.Remove(0, 4);
                         }
                         else
-                            throw new JsonException("Invalid token starting with 't'! 'true' expected..");
+                            throw new DataException("Invalid token starting with 't'! 'true' expected..");
                     } break;
                     case 'n': // '\u006E', '\u0075', '\u006C', '\u006C'
                     {
@@ -655,7 +654,7 @@ namespace CSharpTools
                             data = data.Remove(0, 4);
                         }
                         else
-                            throw new JsonException("Invalid token starting with 'n'! 'null' expected..");
+                            throw new DataException("Invalid token starting with 'n'! 'null' expected..");
                     } break;
                     case 'f': // '\u0066', '\u0061', '\u006C', '\u0073', '\u0065'
                     {
@@ -665,7 +664,7 @@ namespace CSharpTools
                             data = data.Remove(0, 5);
                         }
                         else
-                            throw new JsonException("Invalid token starting with 'f'! 'false' expected..");
+                            throw new DataException("Invalid token starting with 'f'! 'false' expected..");
                     } break;
                     case '"': // '\u0022'
                     {
@@ -679,7 +678,7 @@ namespace CSharpTools
                         
                         if (indices[0] < 0 && indices[1] < 0 && indices[2] < 0 && indices[3] < 0)
                         {
-                            throw new JsonException("Didn't find expected end of string!");
+                            throw new DataException("Didn't find expected end of string!");
                         }
 
                         int index = Int32.MaxValue;
@@ -724,7 +723,7 @@ namespace CSharpTools
                         }
                         catch
                         {
-                            throw new JsonException($"Invalid token when expecting number! Look for \"{str}\"..");
+                            throw new DataException($"Invalid token when expecting number! Look for \"{str}\"..");
                         }
                         tokens.Add(new JSONToken(JSONToken.ETokenType.Number, str));
                         data = data.Remove(0, str.Length);
@@ -734,11 +733,11 @@ namespace CSharpTools
                     case 'e': // '\u0065'
                     case 'E': // '\u0045'
                     {
-                        throw new JsonException($"Invalid token: '{data[0]}'! Numbers should start with a digit or '-'.");
+                        throw new DataException($"Invalid token: '{data[0]}'! Numbers should start with a digit or '-'.");
                     }
                     case '\'': // '\u0027'
                     {
-                        throw new JsonException($"Invalid token: '{data[0]}'! Strings should start with a '\"'.");
+                        throw new DataException($"Invalid token: '{data[0]}'! Strings should start with a '\"'.");
                     }
                 }
             }

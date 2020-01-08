@@ -32,7 +32,7 @@ ExportedObj/
 **/[Oo]bj/
 
 # Rider Generated
-.idea/
+**/.idea/
 
 # Custom Removed
 CSharpProject/
