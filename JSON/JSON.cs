@@ -1,4 +1,4 @@
-﻿/* ======================================================================= *
+/* ======================================================================= *
  * CSharpTools are meant to be useful and reusable
  *
  * JSON (JavaScript Object Notation)
@@ -6,7 +6,7 @@
  * 
  * Author: Charlie Volpe
  * Started: 2019-12-16
- * Version: 1.0.1
+ * Version: 1.1.0
  * 
  * Description:
  * An implementation of the JSON format for C# & .Net that is easy to use
@@ -26,6 +26,7 @@
 using System;
 using System.Data;
 using System.Globalization;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -151,6 +152,36 @@ namespace CSharpTools
         public string Serialize()
         {
             return _root.Serialize();
+        }
+
+        /// <summary>
+        /// Cast JSON to JSONObject
+        /// </summary>
+        /// <param name="json">JSON to cast</param>
+        /// <returns>JSONObject or default</returns>
+        public static implicit operator JSONObject(JSON json)
+        {
+            if (json != null && json._root.GetDataType() == typeof(JSONObject))
+            {
+                return (JSONObject) json._root;
+            }
+
+            return default;
+        }
+        
+        /// <summary>
+        /// Cast JSON to JSONArray
+        /// </summary>
+        /// <param name="json">JSON to cast</param>
+        /// <returns>JSONArray or default</returns>
+        public static implicit operator JSONArray(JSON json)
+        {
+            if (json != null && json._root.GetDataType() == typeof(JSONArray))
+            {
+                return (JSONArray) json._root;
+            }
+            
+            return default;
         }
     }
 
@@ -764,14 +795,29 @@ namespace CSharpTools
     /// ':' U+003A colon --- separates a key and a value
     /// '}' U+007D right curly bracket --- ends the object
     /// </summary>
-    public class JSONObject
+    public class JSONObject : IEnumerable<KeyValuePair<string, JSONElement>>
     {
         private Dictionary<string, JSONElement> _data;
-        
+
+        public IEnumerator<KeyValuePair<string, JSONElement>> GetEnumerator()
+        {
+            return _data.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
         public JSONElement this[string key]
         {
             get => _data[key];
             set => _data[key] = value;
+        }
+
+        public bool HasKey(string key)
+        {
+            return _data.ContainsKey(key);
         }
         
         public JSONObject()
@@ -817,9 +863,19 @@ namespace CSharpTools
     /// '[' U+005B left square bracket --- begins the array
     /// ']' U+005D right square bracket --- ends the array
     /// </summary>
-    public class JSONArray
+    public class JSONArray : IEnumerable<JSONElement>
     {
         private List<JSONElement> _data;
+
+        public IEnumerator<JSONElement> GetEnumerator()
+        {
+            return _data.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public JSONElement this[int i]
         {
