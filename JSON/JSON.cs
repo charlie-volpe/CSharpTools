@@ -782,7 +782,10 @@ namespace CSharpTools
         ~JSONObject()
         {
             _data.Clear();
+            // TrimExcess if possible based on .NET used
+#if NETSTANDARD2_1 || NETCOREAPP2_1 || NETCOREAPP2_2 || NETCOREAPP3_0 || NETCOREAPP3_1
             _data.TrimExcess();
+#endif
             _data = null;
         }
 
