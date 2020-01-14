@@ -2,8 +2,6 @@
 
 ## Dependencies
 - C# 7.1+
-- .Net
-  - .Net Core 2.1+ or .Net Standard 2.1+
 
 ## Why another JSON implementation?
 I don't enjoy using the DataContracts implementation for JSON in C#. I wanted a JSON implementation
