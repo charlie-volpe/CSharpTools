@@ -14,12 +14,23 @@ There are examples in the code but I will include a small section here:
 // String can be read from file but for this example, I am just showing the full string.
 string people = "[{\"name\": \"Smith\"}, {\"name\": \"Doe\"}]";
 
-JSON json0 = new JSON(people); // Can deserialize on construction
+// Can now cast directly to JSONObject or JSONArray from JSON
+// This will allow for use of foreach:
+// JSONObject jsonObj; foreach(KeyValuePair<string, JSONElement> kvp in jsonObj){}
+// JSONArray jsonArr; foreach(JSONElement elem in jsonArr){}
+JSONArray json0 = new JSON(people); // Can deserialize on construction
 JSONObject firstPerson = json0[0]; // Uses implicit cast from JSONElement to JSONObject
 
 JSON json1 = new JSON();
+// If deserializing later on, you will need to cast after the deserialize as well:
+// json1.Deserialize(people);
+// JSONArray jsonArray1 = json1;
 json1.Deserialize(people); // Can deserialize later on as well
 JSONObject secondPerson = json1[1]; // Could have just as easily been json0[1]
+
+// Can now also check if a JSONObject has a key:
+// secondPerson.HasKey("name") --> true
+// secondPerson.HasKey("birthdate") --> false
 
 Console.WriteLine("Full: " + json0.Serialize());
 // Full: [{"name":"Smith"},{"name":"Doe"}]
