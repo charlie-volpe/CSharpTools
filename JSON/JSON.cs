@@ -6,7 +6,7 @@
  * 
  * Author: Charlie Volpe
  * Started: 2019-12-16
- * Version: 1.1.0
+ * Version: 1.1.1
  * 
  * Description:
  * An implementation of the JSON format for C# & .Net that is easy to use
@@ -111,11 +111,20 @@ namespace CSharpTools
             }
         }
         
+        /// <summary>
+        /// Constructor for JSON which sets the root to JSONObject as default
+        /// </summary>
         public JSON()
         {
             _root = new JSONObject();
         }
 
+        /// <summary>
+        /// Constructor for JSON which takes the content as a string and
+        /// deserializes it immediately, the JSON's type is determined by
+        /// the content that is deserialized.
+        /// </summary>
+        /// <param name="content">String data to deserialize</param>
         public JSON(string content)
         {
             Deserialize(content);
@@ -195,6 +204,9 @@ namespace CSharpTools
     /// </summary>
     public class JSONToken
     {
+        /// <summary>
+        /// All currently available token types including an invalid type
+        /// </summary>
         public enum ETokenType
         {
             OpenCurly = 0,
@@ -213,6 +225,11 @@ namespace CSharpTools
         private ETokenType _token;
         private string _value;
 
+        /// <summary>
+        /// Constructor for JSONToken which sets the token type and string value
+        /// </summary>
+        /// <param name="token">ETokenType to set</param>
+        /// <param name="value">string to set</param>
         public JSONToken(ETokenType token, string value)
         {
             _token = token;
@@ -225,11 +242,19 @@ namespace CSharpTools
             _value = null;
         }
 
+        /// <summary>
+        /// Get the TokenType
+        /// </summary>
+        /// <returns>ETokenType of token</returns>
         public ETokenType GetTokenType()
         {
             return _token;
         }
 
+        /// <summary>
+        /// Get the Token value
+        /// </summary>
+        /// <returns>String value that holds the token's data</returns>
         public string GetTokenValue()
         {
             return _value;
@@ -799,6 +824,11 @@ namespace CSharpTools
     {
         private Dictionary<string, JSONElement> _data;
 
+        /// <summary>
+        /// Implemented IEnumerator for use of foreach loop
+        /// </summary>
+        /// <returns>IEnumerator of type KeyValuePair, with key: string
+        /// and value: JSONElement, from _data</returns>
         public IEnumerator<KeyValuePair<string, JSONElement>> GetEnumerator()
         {
             return _data.GetEnumerator();
@@ -809,17 +839,30 @@ namespace CSharpTools
             return GetEnumerator();
         }
 
+        /// <summary>
+        /// Get/Set _data by key
+        /// </summary>
+        /// <param name="key">Key</param>
         public JSONElement this[string key]
         {
             get => _data[key];
             set => _data[key] = value;
         }
 
+        /// <summary>
+        /// Check the _data dictionary for the key
+        /// </summary>
+        /// <param name="key">Key to check</param>
+        /// <returns>True if found</returns>
         public bool HasKey(string key)
         {
             return _data.ContainsKey(key);
         }
         
+        /// <summary>
+        /// Constructor which initializes a new Dictionary, with key: string
+        /// and value: JSONElement, in _data
+        /// </summary>
         public JSONObject()
         {
             _data = new Dictionary<string, JSONElement>();
@@ -835,11 +878,19 @@ namespace CSharpTools
             _data = null;
         }
 
+        /// <summary>
+        /// Return the _data Dictionary, with key: string and value: JSONElement
+        /// </summary>
+        /// <returns>Dictionary key: string, value: JSONElement</returns>
         public Dictionary<string, JSONElement> GetData()
         {
             return _data;
         }
 
+        /// <summary>
+        /// Serialize the JSONObject
+        /// </summary>
+        /// <returns>String of serialized data</returns>
         public string Serialize()
         {
             JSONElement element = this;
@@ -867,6 +918,10 @@ namespace CSharpTools
     {
         private List<JSONElement> _data;
 
+        /// <summary>
+        /// Implemented IEnumerator for use of foreach loop
+        /// </summary>
+        /// <returns>IEnumerator of type JSONElement from _data</returns>
         public IEnumerator<JSONElement> GetEnumerator()
         {
             return _data.GetEnumerator();
@@ -877,6 +932,10 @@ namespace CSharpTools
             return GetEnumerator();
         }
 
+        /// <summary>
+        /// Get/Set _data by index
+        /// </summary>
+        /// <param name="i">Index</param>
         public JSONElement this[int i]
         {
             get => _data[i];
@@ -890,9 +949,22 @@ namespace CSharpTools
             }
         }
 
+        /// <summary>
+        /// Constructor which initializes a new List of JSONElements in _data
+        /// </summary>
         public JSONArray()
         {
             _data = new List<JSONElement>();
+        }
+
+        /// <summary>
+        /// Check _data for the element
+        /// </summary>
+        /// <param name="element">JSONElement to check</param>
+        /// <returns>True if found</returns>
+        public bool Contains(JSONElement element)
+        {
+            return _data.Contains(element);
         }
 
         ~JSONArray()
@@ -902,11 +974,19 @@ namespace CSharpTools
             _data = null;
         }
 
+        /// <summary>
+        /// Return the _data List of JSONElements
+        /// </summary>
+        /// <returns>List of JSONElement items</returns>
         public List<JSONElement> GetData()
         {
             return _data;
         }
 
+        /// <summary>
+        /// Serialize the JSONArray
+        /// </summary>
+        /// <returns>String of serialized data</returns>
         public string Serialize()
         {
             JSONElement element = this;
