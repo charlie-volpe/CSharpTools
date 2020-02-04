@@ -6,7 +6,7 @@
  * 
  * Author: Charlie Volpe
  * Started: 2019-12-16
- * Version: 1.1.1
+ * Version: 1.1.2
  * 
  * Description:
  * An implementation of the JSON format for C# & .Net that is easy to use
@@ -858,6 +858,15 @@ namespace CSharpTools
         {
             return _data.ContainsKey(key);
         }
+
+        /// <summary>
+        /// Remove element from _data dictionary
+        /// </summary>
+        /// <param name="key">String key of item to remove</param>
+        public void Remove(string key)
+        {
+            _data.Remove(key);
+        }
         
         /// <summary>
         /// Constructor which initializes a new Dictionary, with key: string
@@ -965,6 +974,24 @@ namespace CSharpTools
         public bool Contains(JSONElement element)
         {
             return _data.Contains(element);
+        }
+
+        /// <summary>
+        /// Remove element from the _data at index
+        /// </summary>
+        /// <param name="index">Index of item to remove</param>
+        public void RemoveAt(int index)
+        {
+            _data.RemoveAt(index);
+        }
+
+        /// <summary>
+        /// Remove element from the _data
+        /// </summary>
+        /// <param name="element">JSONElement to remove</param>
+        public void Remove(JSONElement element)
+        {
+            _data.Remove(element);
         }
 
         ~JSONArray()
