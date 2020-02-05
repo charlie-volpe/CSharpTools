@@ -6,7 +6,7 @@
  * 
  * Author: Charlie Volpe
  * Started: 2019-12-16
- * Version: 1.1.2
+ * Version: 1.1.3
  * 
  * Description:
  * An implementation of the JSON format for C# & .Net that is easy to use
@@ -967,13 +967,118 @@ namespace CSharpTools
         }
 
         /// <summary>
-        /// Check _data for the element
+        /// Check _data for the JSONElement
         /// </summary>
         /// <param name="element">JSONElement to check</param>
         /// <returns>True if found</returns>
         public bool Contains(JSONElement element)
         {
             return _data.Contains(element);
+        }
+
+        /// <summary>
+        /// Check _data for the JSONObject
+        /// </summary>
+        /// <param name="element">JSONObject to check</param>
+        /// <returns>True if found</returns>
+        public bool Contains(JSONObject element)
+        {
+            bool found = false;
+            
+            for (int i = 0; i < _data.Count; i++)
+            {
+                if (element == (JSONObject) _data[i])
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Check _data for the JSONArray
+        /// </summary>
+        /// <param name="element">JSONArray to check</param>
+        /// <returns>True if found</returns>
+        public bool Contains(JSONArray element)
+        {
+            bool found = false;
+
+            for (int i = 0; i < _data.Count; i++)
+            {
+                if (element == (JSONArray) _data[i])
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Check _data for the double
+        /// </summary>
+        /// <param name="element">double to check</param>
+        /// <returns>True if found</returns>
+        public bool Contains(double element)
+        {
+            bool found = false;
+
+            for (int i = 0; i < _data.Count; i++)
+            {
+                if (element == (double) _data[i])
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Check _data for the string
+        /// </summary>
+        /// <param name="element">string to check</param>
+        /// <returns>True if found</returns>
+        public bool Contains(string element)
+        {
+            bool found = false;
+
+            for (int i = 0; i < _data.Count; i++)
+            {
+                if (element == (string) _data[i])
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            return found;
+        }
+
+        /// <summary>
+        /// Check _data for true of false
+        /// </summary>
+        /// <param name="element">bool to check</param>
+        /// <returns>True if found</returns>
+        public bool Contains(bool element)
+        {
+            bool found = false;
+
+            for (int i = 0; i < _data.Count; i++)
+            {
+                if (element == (bool) _data[i])
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            return found;
         }
 
         /// <summary>
