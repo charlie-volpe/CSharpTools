@@ -529,7 +529,7 @@ namespace CSharpTools
             string data = Regex.Replace(content, @"\s+", "");
             
             // Tokenize the data
-            List<JSONToken> tokens = GetTokens(data);
+            List<JSONToken> tokens = Tokenizer(data);
 
             // Parse the data
             int index = 0;
@@ -648,76 +648,72 @@ namespace CSharpTools
         }
         
         /// <summary>
-        /// GetTokens walks through the characters in the data and creates tokens.
+        /// Tokenizer walks through the characters in the data and creates tokens.
         /// </summary>
         /// <param name="data">String data to parse</param>
         /// <returns>A list of the tokens found in the string data</returns>
         /// <exception cref="DataException">Exception thrown if invalid json data found</exception>
-        private static List<JSONToken> GetTokens(string data)
+        private static List<JSONToken> Tokenizer(string data)
         {
             List<JSONToken> tokens = new List<JSONToken>();
+
+            int currentPos = 0;
             
             // Cycles through the data and removes the characters it has tokenized as it goes
-            while (data.Length > 0 && data[0] != '\0')
+            while (currentPos < data.Length && data[currentPos] != '\0')
             {
-                switch (data[0])
+                switch (data[currentPos])
                 {
                     case '{': // '\u007B'
                     {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenCurly, data[0].ToString()));
-                        data = data.Remove(0, 1);
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenCurly, data[currentPos++].ToString()));
                     } break;
                     case '[': // '\u005B'
                     {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenBracket, data[0].ToString()));
-                        data = data.Remove(0, 1);
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.OpenBracket, data[currentPos++].ToString()));
                     } break;
                     case ':': // '\u003A'
                     {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.Colon, data[0].ToString()));
-                        data = data.Remove(0, 1);
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.Colon, data[currentPos++].ToString()));
                     } break;
                     case ',': // '\u002C'
                     {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.Comma, data[0].ToString()));
-                        data = data.Remove(0, 1);
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.Comma, data[currentPos++].ToString()));
                     } break;
                     case '}': // '\u007D'
                     {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseCurly, data[0].ToString()));
-                        data = data.Remove(0, 1);
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseCurly, data[currentPos++].ToString()));
                     } break;
                     case ']': // '\u005D'
                     {
-                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseBracket, data[0].ToString()));
-                        data = data.Remove(0, 1);
+                        tokens.Add(new JSONToken(JSONToken.ETokenType.CloseBracket, data[currentPos++].ToString()));
                     } break;
                     case 't': // '\u0074', '\u0072', '\u0075', '\u0065'
                     {
-                        if (data[1] == 'r' && data[2] == 'u' && data[3] == 'e')
+                        if (data[currentPos + 1] == 'r' && data[currentPos + 2] == 'u' && data[currentPos + 3] == 'e')
                         {
                             tokens.Add(new JSONToken(JSONToken.ETokenType.Boolean, "true"));
-                            data = data.Remove(0, 4);
+                            currentPos += 4;
                         }
                         else
                             throw new DataException("Invalid token starting with 't'! 'true' expected..");
                     } break;
                     case 'n': // '\u006E', '\u0075', '\u006C', '\u006C'
                     {
-                        if (data[1] == 'u' && data[2] == 'l' && data[3] == 'l')
+                        if (data[currentPos + 1] == 'u' && data[currentPos + 2] == 'l' && data[currentPos + 3] == 'l')
                         {
                             tokens.Add(new JSONToken(JSONToken.ETokenType.Null, "null"));
-                            data = data.Remove(0, 4);
+                            currentPos += 4;
                         }
                         else
                             throw new DataException("Invalid token starting with 'n'! 'null' expected..");
                     } break;
                     case 'f': // '\u0066', '\u0061', '\u006C', '\u0073', '\u0065'
                     {
-                        if (data[1] == 'a' && data[2] == 'l' && data[3] == 's' && data[4] == 'e')
+                        if (data[currentPos + 1] == 'a' && data[currentPos + 2] == 'l' && data[currentPos + 3] == 's' && data[currentPos + 4] == 'e')
                         {
                             tokens.Add(new JSONToken(JSONToken.ETokenType.Boolean, "false"));
-                            data = data.Remove(0, 5);
+                            currentPos += 5;
                         }
                         else
                             throw new DataException("Invalid token starting with 'f'! 'false' expected..");
@@ -726,10 +722,10 @@ namespace CSharpTools
                     {
                         int[] indices =
                         {
-                            data.IndexOf("\":", StringComparison.Ordinal),
-                            data.IndexOf("\",", StringComparison.Ordinal),
-                            data.IndexOf("\"}", StringComparison.Ordinal),
-                            data.IndexOf("\"]", StringComparison.Ordinal)
+                            data.IndexOf("\":", currentPos, StringComparison.Ordinal),
+                            data.IndexOf("\",", currentPos, StringComparison.Ordinal),
+                            data.IndexOf("\"}", currentPos, StringComparison.Ordinal),
+                            data.IndexOf("\"]", currentPos, StringComparison.Ordinal)
                         };
                         
                         if (indices[0] < 0 && indices[1] < 0 && indices[2] < 0 && indices[3] < 0)
@@ -747,9 +743,9 @@ namespace CSharpTools
                             }
                         }
                         
-                        string str = data.Substring(0, index + 1);
+                        string str = data.Substring(currentPos, index - currentPos + 1);
                         tokens.Add(new JSONToken(JSONToken.ETokenType.String, str));
-                        data = data.Remove(0, str.Length);
+                        currentPos += str.Length;
                     } break;
                     case '-': // '\u002D'
                     case '0': // '\u0030'
@@ -764,14 +760,14 @@ namespace CSharpTools
                     case '9': // '\u0039'
                     {
                         int count = 0;
-                        char c = data[count];
+                        char c = data[currentPos + count];
                         while ((c >= '0' && c <= '9') || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-')
                         {
                             count++;
-                            c = data[count];
+                            c = data[currentPos + count];
                         }
 
-                        string str = data.Substring(0, count);
+                        string str = data.Substring(currentPos, count);
                         try
                         {
                             // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
@@ -782,18 +778,18 @@ namespace CSharpTools
                             throw new DataException($"Invalid token when expecting number! Look for \"{str}\"..");
                         }
                         tokens.Add(new JSONToken(JSONToken.ETokenType.Number, str));
-                        data = data.Remove(0, str.Length);
+                        currentPos += str.Length;
                     } break;
                     case '+': // '\u002B'
                     case '.': // '\u002E'
                     case 'e': // '\u0065'
                     case 'E': // '\u0045'
                     {
-                        throw new DataException($"Invalid token: '{data[0]}'! Numbers should start with a digit or '-'.");
+                        throw new DataException($"Invalid token: '{data[currentPos]}'! Numbers should start with a digit or '-'.");
                     }
                     case '\'': // '\u0027'
                     {
-                        throw new DataException($"Invalid token: '{data[0]}'! Strings should start with a '\"'.");
+                        throw new DataException($"Invalid token: '{data[currentPos]}'! Strings should start with a '\"'.");
                     }
                 }
             }
